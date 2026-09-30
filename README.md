@@ -214,24 +214,22 @@ separates real measurements from planned production capabilities.
 
 ## 📷 Screenshots
 
-### Landing page
-
 The entry point explains the problem and routes visitors to the correct mode.
 
-![Ocean Valley landing page](docs/screenshots/01-landing.png)
+![Ocean Valley landing page](ocean3d/docs/screenshots/01-landing.png)
 
 ### Operational dashboard
 
 The operational view exposes model variables, depth/time navigation, styling
 controls, and instrument profile inspection.
 
-![Ocean Valley operational dashboard](docs/screenshots/02-dashboard.png)
+![Ocean Valley operational dashboard](ocean3d/docs/screenshots/02-dashboard.png)
 
 ### Education and outreach mode
 
 The outreach view turns the same data into three guided ocean stories.
 
-![Ocean Valley outreach mode](docs/screenshots/03-outreach.png)
+![Ocean Valley outreach mode](ocean3d/docs/screenshots/03-outreach.png)
 
 ## 📁 Project Structure
 
