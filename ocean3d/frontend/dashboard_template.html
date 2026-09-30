@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ocean Valley — India EEZ Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.121/Build/Cesium/Cesium.js"></script>
+<link href="https://cesium.com/downloads/cesiumjs/releases/1.121/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #050B14;
+    --bg-panel: rgba(10, 22, 40, 0.72);
+    --cyan: #1CAAD9;
+    --teal: #2EE6D6;
+    --amber: #FF8A3D;
+    --text: #E8EEF4;
+    --text-dim: #7C93A8;
+    --border: rgba(46, 230, 214, 0.16);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; background: var(--bg-deep); overflow: hidden;
+    font-family: 'Inter', sans-serif; color: var(--text); }
+  #cesiumContainer { position: absolute; inset: 0; }
+  .cesium-viewer-bottom, .cesium-viewer-toolbar, .cesium-viewer-animationContainer,
+  .cesium-viewer-timelineContainer, .cesium-viewer-fullscreenContainer { display: none !important; }
+  .cesium-credit-textContainer, .cesium-credit-imageContainer { display: none !important; }
+
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* ---- Top bar ---- */
+  #topbar {
+    position: absolute; top: 0; left: 0; right: 0; height: 56px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px; z-index: 20; pointer-events: none;
+  }
+  #topbar .brand { display: flex; align-items: center; gap: 10px; pointer-events: auto; }
+  #topbar .brand .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--teal);
+    box-shadow: 0 0 10px var(--teal); }
+  #topbar .brand span { font-weight: 600; letter-spacing: 0.2px; font-size: 15px; }
+  #topbar .region { font-size: 12.5px; color: var(--text-dim); pointer-events: auto; }
+
+  /* ---- Floating glass panels ---- */
+  .panel {
+    position: absolute; background: var(--bg-panel); backdrop-filter: blur(14px);
+    border: 1px solid var(--border); border-radius: 14px; padding: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.35); z-index: 15;
+  }
+  .panel h3 { margin: 0 0 12px 0; font-size: 11.5px; text-transform: none; letter-spacing: 0.3px;
+    color: var(--text-dim); font-weight: 500; }
+  .field { margin-bottom: 14px; }
+  .field:last-child { margin-bottom: 0; }
+  .field label { display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 6px; }
+  select, input[type=number] {
+    width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+    color: var(--text); border-radius: 8px; padding: 7px 9px; font-size: 13px; font-family: inherit;
+  }
+  input[type=range] { width: 100%; accent-color: var(--teal); }
+  .row2 { display: flex; gap: 8px; }
+  .row2 > div { flex: 1; }
+
+  #leftPanel { left: 20px; top: 76px; width: 220px; }
+  #rightPanel { right: 20px; top: 76px; width: 220px; }
+
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; }
+  .switch { position: relative; width: 36px; height: 20px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider-toggle { position: absolute; inset: 0; background: rgba(255,255,255,0.12); border-radius: 20px; cursor: pointer; transition: 0.2s; }
+  .slider-toggle:before { content: ""; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px;
+    background: white; border-radius: 50%; transition: 0.2s; }
+  input:checked + .slider-toggle { background: var(--teal); }
+  input:checked + .slider-toggle:before { transform: translateX(16px); }
+
+  /* colorbar legend */
+  #legendBar { height: 12px; border-radius: 6px; margin-top: 8px;
+    background: linear-gradient(90deg, #2b0a5c, #1CAAD9, #2EE6D6, #f5d76e, #FF8A3D, #d9432e); }
+  #legendLabels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+
+  /* ---- Bottom time bar ---- */
+  #bottomBar {
+    position: absolute; left: 50%; transform: translateX(-50%); bottom: 22px;
+    width: min(560px, 86vw); display: flex; align-items: center; gap: 14px; padding: 12px 18px;
+  }
+  #playBtn { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border);
+    background: rgba(28,170,217,0.12); color: var(--cyan); cursor: pointer; font-size: 14px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  #playBtn:hover { background: rgba(28,170,217,0.2); }
+  #timeSlider { flex: 1; }
+  #timeLabel { font-size: 12.5px; color: var(--text-dim); width: 90px; text-align: right; flex-shrink: 0; }
+
+  /* ---- Depth control (vertical, right edge) ---- */
+  #depthControl {
+    position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
+    display: flex; flex-direction: column; align-items: center; padding: 14px 10px; width: 56px;
+  }
+  #depthControl label { font-size: 10px; color: var(--text-dim); margin-bottom: 8px; }
+  #depthSlider { writing-mode: vertical-lr; direction: rtl; width: 6px; height: 160px; accent-color: var(--cyan); }
+  #depthReadout { margin-top: 8px; font-size: 12px; }
+
+  /* ---- Profile side panel ---- */
+  #profilePanel {
+    position: absolute; right: -360px; top: 76px; bottom: 96px; width: 320px;
+    transition: right 0.35s ease; overflow-y: auto;
+  }
+  #profilePanel.open { right: 20px; }
+  #profilePanel .closeBtn { position: absolute; top: 12px; right: 12px; cursor: pointer;
+    color: var(--text-dim); font-size: 18px; line-height: 1; background: none; border: none; }
+  #profilePanel .closeBtn:hover { color: var(--text); }
+  #profileMeta { font-size: 12px; color: var(--text-dim); margin: 2px 0 14px 0; }
+  #profileMeta b { color: var(--text); }
+  #profileChart { width: 100%; height: 260px; display: block; }
+  .legend-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+
+  #loadShimmer { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+    color: var(--text-dim); font-size: 13px; z-index: 25; display: none; }
+
+  #noDataBadge {
+    position: absolute; left: 50%; top: 90px; transform: translateX(-50%);
+    background: rgba(255,138,61,0.12); border: 1px solid rgba(255,138,61,0.35); color: var(--amber);
+    padding: 6px 14px; border-radius: 20px; font-size: 12px; z-index: 15; display: none;
+  }
+
+  #demoNote {
+    position: absolute; left: 20px; bottom: 22px; max-width: 260px; font-size: 11px;
+    color: var(--text-dim); line-height: 1.5; z-index: 15; padding: 10px 14px;
+  }
+  #demoNote b { color: var(--amber); }
+</style>
+</head>
+<body>
+<div id="cesiumContainer"></div>
+
+<div id="topbar">
+  <div class="brand"><span class="dot"></span><span>OCEAN VALLEY — INCOIS</span></div>
+  <div class="region mono" style="pointer-events:auto; display:flex; align-items:center; gap:14px;">
+    India EEZ · Arabian Sea + Bay of Bengal
+    <a href="outreach.html" style="color:var(--teal); text-decoration:none; border:1px solid var(--border); padding:4px 12px; border-radius:14px; font-size:11.5px;">Explore for Education →</a>
+  </div>
+</div>
+
+<div id="leftPanel" class="panel">
+  <h3>Layer & Variable</h3>
+  <div class="field">
+    <label>Variable</label>
+    <select id="variableSelect">
+      <option value="temperature">Temperature</option>
+      <option value="salinity">Salinity</option>
+      <option value="ssh">Sea Surface Height</option>
+    </select>
+  </div>
+  <div class="field toggle-row">
+    <label style="margin:0;">Model layer</label>
+    <label class="switch"><input type="checkbox" id="modelToggle" checked><span class="slider-toggle"></span></label>
+  </div>
+  <div class="field toggle-row">
+    <label style="margin:0;">Argo markers</label>
+    <label class="switch"><input type="checkbox" id="markerToggle" checked><span class="slider-toggle"></span></label>
+  </div>
+  <div class="field">
+    <label>Layer opacity — <span id="opacityVal">80</span>%</label>
+    <input type="range" id="opacitySlider" min="10" max="100" value="80">
+  </div>
+</div>
+
+<div id="rightPanel" class="panel">
+  <h3>Colorbar</h3>
+  <div class="field">
+    <label>Palette</label>
+    <select id="paletteSelect">
+      <option value="thermal">Thermal (default)</option>
+      <option value="viridis">Viridis (colorblind-safe)</option>
+      <option value="haline">Haline</option>
+    </select>
+  </div>
+  <div class="field row2">
+    <div><label>Min</label><input type="number" id="minInput" step="0.1"></div>
+    <div><label>Max</label><input type="number" id="maxInput" step="0.1"></div>
+  </div>
+  <div class="field toggle-row">
+    <label style="margin:0;">Log scale</label>
+    <label class="switch"><input type="checkbox" id="logToggle"><span class="slider-toggle"></span></label>
+  </div>
+  <div id="legendBar"></div>
+  <div id="legendLabels"><span id="legendMin">-</span><span id="legendUnits" class="mono">-</span><span id="legendMax">-</span></div>
+</div>
+
+<div id="depthControl" class="panel">
+  <label>DEPTH</label>
+  <input type="range" id="depthSlider" min="0" max="2" value="0" step="1">
+  <div id="depthReadout" class="mono">0 m</div>
+</div>
+
+<div id="bottomBar" class="panel">
+  <button id="playBtn">▶</button>
+  <input type="range" id="timeSlider" min="0" max="2" value="0" step="1">
+  <div id="timeLabel" class="mono">2026-06-21</div>
+</div>
+
+<div id="noDataBadge">No data at this depth/time</div>
+
+<div id="profilePanel" class="panel">
+  <button class="closeBtn" id="closeProfileBtn">✕</button>
+  <h3>Instrument Profile</h3>
+  <div id="profileMeta">Click a float marker to inspect its profile</div>
+  <canvas id="profileChart" width="290" height="260"></canvas>
+</div>
+
+<div id="demoNote">
+  <b>Demo note:</b> float positions are illustrative placements within the EEZ — the 3 uploaded Argo files
+  didn't contain India-region floats that week. Temperature/salinity readings shown are real Argo values.
+</div>
+
+<script>
+/* =========================================================
+   DATA — injected by build script (see inject_data.py)
+   ========================================================= */
+const MODEL_BUNDLE = {{MODEL_BUNDLE_JSON}};
+const FLOATS_BUNDLE = {{FLOATS_BUNDLE_JSON}};
+const CESIUM_TOKEN = "{{eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6Im9aNlRSR0kzMHBEQVJReFoiLCJqdGkiOiJmNzVkNTZhMy03YWQ1LTQ0YTEtYWQ2Ni1hMDFhODUxMjgxY2MiLCJpZCI6NDg5MDc5LCJpc3MiOiJodHRwczovL2FwaS5jZXNpdW0uY29tIiwiYXVkIjoidW5kZWZpbmVkX2RlZmF1bHQiLCJpYXQiOjE3ODkxMzc3NzV9.7pkN9tUwObsYp-r4FmyV5l11uKjzYmuY4kd8F6oGmsk}}";
+const API_BASE = '/api';
+
+/* =========================================================
+   SETUP
+   ========================================================= */
+Cesium.Ion.defaultAccessToken = CESIUM_TOKEN;
+
+const EEZ = { west: 63.0, south: -3.0, east: 97.0, north: 30.0 };
+
+const viewer = new Cesium.Viewer('cesiumContainer', {
+  baseLayerPicker: false, geocoder: false, homeButton: false, sceneModePicker: false,
+  navigationHelpButton: false, animation: false, timeline: false, fullscreenButton: false,
+  infoBox: false, selectionIndicator: false, shouldAnimate: false,
+});
+viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#050B14');
+viewer.scene.skyAtmosphere.show = true;
+viewer.scene.fog.enabled = false;
+
+viewer.camera.flyTo({
+  destination: Cesium.Rectangle.fromDegrees(EEZ.west, EEZ.south, EEZ.east, EEZ.north),
+  duration: 1.4,
+});
+
+/* =========================================================
+   PALETTES
+   ========================================================= */
+const PALETTES = {
+  thermal: [[43,10,92],[28,170,217],[46,230,214],[245,215,110],[255,138,61],[217,67,46]],
+  viridis: [[68,1,84],[59,82,139],[33,145,140],[94,201,98],[253,231,37]],
+  haline:  [[8,29,88],[33,113,181],[65,182,196],[161,218,180],[255,255,204]],
+};
+function lerpColor(a,b,t){ return a.map((v,i)=>Math.round(v+(b[i]-v)*t)); }
+function paletteColor(paletteName, t){
+  const stops = PALETTES[paletteName] || PALETTES.thermal;
+  t = Math.max(0, Math.min(1, t));
+  const scaled = t * (stops.length - 1);
+  const i = Math.floor(scaled);
+  const frac = scaled - i;
+  if (i >= stops.length - 1) return stops[stops.length-1];
+  return lerpColor(stops[i], stops[i+1], frac);
+}
+function paletteCss(name){
+  const stops = PALETTES[name] || PALETTES.thermal;
+  return 'linear-gradient(90deg, ' + stops.map(s=>`rgb(${s[0]},${s[1]},${s[2]})`).join(', ') + ')';
+}
+
+/* =========================================================
+   STATE
+   ========================================================= */
+const TIMES = ['2026-06-21','2026-06-22','2026-06-23'];
+const DEPTHS = [0,10,30];
+let state = {
+  variable: 'temperature',
+  depthIdx: 0,
+  timeIdx: 0,
+  opacity: 0.8,
+  palette: 'thermal',
+  customRange: null, // [min,max] if user overrides
+  logScale: false,
+  playing: false,
+};
+let currentImageryLayer = null;
+let markerEntities = [];
+
+function bundleKey(variable, timeIdx, depthIdx){
+  const t = TIMES[timeIdx];
+  const d = variable === 'ssh' ? 0 : DEPTHS[depthIdx];
+  return `${variable}_${t}_${d}m`;
+}
+
+function dataRange(grid){
+  let min = Infinity, max = -Infinity;
+  for (const row of grid) for (const v of row) {
+    if (v === null) continue;
+    if (v < min) min = v;
+    if (v > max) max = v;
+  }
+  return [min, max];
+}
+
+/* =========================================================
+   RENDER MODEL SLICE AS CANVAS -> CESIUM IMAGERY LAYER
+   ========================================================= */
+function renderSlice(){
+  const key = bundleKey(state.variable, state.timeIdx, state.depthIdx);
+  const slice = MODEL_BUNDLE[key];
+  const badge = document.getElementById('noDataBadge');
+  if (!slice) { badge.style.display = 'block'; return; }
+  badge.style.display = 'none';
+
+  const grid = slice.grid;
+  const rows = grid.length, cols = grid[0].length;
+  const [autoMin, autoMax] = dataRange(grid);
+  const [min, max] = state.customRange || [autoMin, autoMax];
+
+  const canvas = document.createElement('canvas');
+  canvas.width = cols; canvas.height = rows;
+  const ctx = canvas.getContext('2d');
+  const imgData = ctx.createImageData(cols, rows);
+  for (let r = 0; r < rows; r++) {
+    // flip vertically: lat array is ascending south->north, canvas row 0 = north
+    const srcRow = grid[rows - 1 - r];
+    for (let c = 0; c < cols; c++) {
+      const v = srcRow[c];
+      const idx = (r * cols + c) * 4;
+      if (v === null) { imgData.data[idx+3] = 0; continue; }
+      let t = (v - min) / (max - min || 1);
+      if (state.logScale) t = Math.log10(1 + 9*Math.max(0,t)) ; // rough log mapping
+      const [R,G,B] = paletteColor(state.palette, t);
+      imgData.data[idx] = R; imgData.data[idx+1] = G; imgData.data[idx+2] = B; imgData.data[idx+3] = 235;
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+
+  if (document.getElementById('modelToggle').checked) {
+    if (currentImageryLayer) viewer.imageryLayers.remove(currentImageryLayer, true);
+    const dataUrl = canvas.toDataURL();
+    const rect = Cesium.Rectangle.fromDegrees(
+      slice.lon[0], slice.lat[0], slice.lon[slice.lon.length-1], slice.lat[slice.lat.length-1]
+    );
+    const provider = new Cesium.SingleTileImageryProvider({ url: dataUrl, rectangle: rect });
+    currentImageryLayer = viewer.imageryLayers.addImageryProvider(provider);
+    currentImageryLayer.alpha = state.opacity;
+  } else if (currentImageryLayer) {
+    viewer.imageryLayers.remove(currentImageryLayer, true);
+    currentImageryLayer = null;
+  }
+
+  // legend
+  document.getElementById('legendBar').style.background = paletteCss(state.palette);
+  document.getElementById('legendMin').textContent = min.toFixed(2);
+  document.getElementById('legendMax').textContent = max.toFixed(2);
+  document.getElementById('legendUnits').textContent = slice.units || '';
+  document.getElementById('minInput').value = min.toFixed(2);
+  document.getElementById('maxInput').value = max.toFixed(2);
+
+  document.getElementById('timeLabel').textContent = TIMES[state.timeIdx];
+  document.getElementById('depthReadout').textContent = (state.variable === 'ssh' ? '0' : DEPTHS[state.depthIdx]) + ' m';
+}
+
+/* =========================================================
+   MARKERS
+   ========================================================= */
+function renderMarkers(){
+  markerEntities.forEach(e => viewer.entities.remove(e));
+  markerEntities = [];
+  if (!document.getElementById('markerToggle').checked) return;
+  FLOATS_BUNDLE.forEach(f => {
+    const entity = viewer.entities.add({
+      position: Cesium.Cartesian3.fromDegrees(f.demo_lon, f.demo_lat),
+      point: { pixelSize: 9, color: Cesium.Color.fromCssColorString('#2EE6D6'),
+        outlineColor: Cesium.Color.fromCssColorString('#050B14'), outlineWidth: 2 },
+      properties: { floatData: f },
+    });
+    markerEntities.push(entity);
+  });
+}
+
+/* =========================================================
+   PROFILE CHART (canvas line chart, no external chart lib)
+   ========================================================= */
+function drawProfileChart(floatData){
+  const canvas = document.getElementById('profileChart');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  const seriesColors = { temperature: '#FF8A3D', salinity: '#1CAAD9' };
+  const vars = Object.keys(floatData.series);
+  const padL = 46, padR = 14, padT = 10, padB = 26;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+
+  let allDepths = [], allValsByVar = {};
+  vars.forEach(v => {
+    const pts = floatData.series[v];
+    allDepths.push(...pts.map(p=>p.depth_m));
+    allValsByVar[v] = pts;
+  });
+  const maxDepth = Math.max(...allDepths, 10);
+
+  // axes
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(padL, padT); ctx.lineTo(padL, H-padB); ctx.lineTo(W-padR, H-padB); ctx.stroke();
+
+  ctx.fillStyle = '#7C93A8'; ctx.font = '10px JetBrains Mono, monospace';
+  ctx.fillText('0 m', 4, padT+4);
+  ctx.fillText(maxDepth.toFixed(0)+' m', 4, H-padB);
+  ctx.fillText('depth →', 4, H-6);
+
+  vars.forEach(v => {
+    const pts = allValsByVar[v];
+    if (!pts.length) return;
+    const vmin = Math.min(...pts.map(p=>p.value));
+    const vmax = Math.max(...pts.map(p=>p.value));
+    ctx.strokeStyle = seriesColors[v] || '#fff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    pts.forEach((p,i) => {
+      const x = padL + ((p.value - vmin)/((vmax-vmin)||1)) * plotW;
+      const y = padT + (p.depth_m / maxDepth) * plotH;
+      if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+    // axis label for this variable's range at bottom
+  });
+
+  // simple legend text
+  let ly = 14;
+  vars.forEach(v => {
+    ctx.fillStyle = seriesColors[v] || '#fff';
+    ctx.fillRect(W-100, ly-8, 8, 8);
+    ctx.fillStyle = '#E8EEF4';
+    ctx.font = '11px Inter, sans-serif';
+    ctx.fillText(v, W-86, ly);
+    ly += 16;
+  });
+}
+
+function openProfilePanel(floatData){
+  document.getElementById('profilePanel').classList.add('open');
+  const meta = document.getElementById('profileMeta');
+  meta.innerHTML = `<b>${floatData.instrument_id}</b> · ${floatData.instrument_type}<br>
+    Last observed: ${floatData.observed_at}<br>
+    Position (demo): ${floatData.demo_lat}, ${floatData.demo_lon}`;
+  drawProfileChart(floatData);
+}
+document.getElementById('closeProfileBtn').onclick = () => {
+  document.getElementById('profilePanel').classList.remove('open');
+};
+
+const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+handler.setInputAction((click) => {
+  const picked = viewer.scene.pick(click.position);
+  if (Cesium.defined(picked) && picked.id && picked.id.properties && picked.id.properties.floatData) {
+    openProfilePanel(picked.id.properties.floatData.getValue());
+  }
+}, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+/* =========================================================
+   CONTROLS WIRING
+   ========================================================= */
+document.getElementById('variableSelect').onchange = (e) => {
+  state.variable = e.target.value; state.customRange = null; renderSlice();
+};
+document.getElementById('depthSlider').oninput = (e) => {
+  state.depthIdx = +e.target.value; renderSlice();
+};
+document.getElementById('timeSlider').oninput = (e) => {
+  state.timeIdx = +e.target.value; renderSlice();
+};
+document.getElementById('opacitySlider').oninput = (e) => {
+  state.opacity = (+e.target.value)/100;
+  document.getElementById('opacityVal').textContent = e.target.value;
+  if (currentImageryLayer) currentImageryLayer.alpha = state.opacity;
+};
+document.getElementById('paletteSelect').onchange = (e) => { state.palette = e.target.value; renderSlice(); };
+document.getElementById('logToggle').onchange = (e) => { state.logScale = e.target.checked; renderSlice(); };
+document.getElementById('minInput').onchange = (e) => {
+  const min = parseFloat(e.target.value), max = parseFloat(document.getElementById('maxInput').value);
+  state.customRange = [min, max]; renderSlice();
+};
+document.getElementById('maxInput').onchange = (e) => {
+  const min = parseFloat(document.getElementById('minInput').value), max = parseFloat(e.target.value);
+  state.customRange = [min, max]; renderSlice();
+};
+document.getElementById('modelToggle').onchange = renderSlice;
+document.getElementById('markerToggle').onchange = renderMarkers;
+
+let playInterval = null;
+document.getElementById('playBtn').onclick = () => {
+  state.playing = !state.playing;
+  document.getElementById('playBtn').textContent = state.playing ? '❚❚' : '▶';
+  if (state.playing) {
+    playInterval = setInterval(() => {
+      state.timeIdx = (state.timeIdx + 1) % TIMES.length;
+      document.getElementById('timeSlider').value = state.timeIdx;
+      renderSlice();
+    }, 1400);
+  } else {
+    clearInterval(playInterval);
+  }
+};
+
+/* =========================================================
+   INIT
+   ========================================================= */
+renderSlice();
+renderMarkers();
+</script>
+</body>
+</html>

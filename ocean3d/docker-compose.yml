@@ -1,0 +1,68 @@
+# docker-compose.yml
+# Per Deployment Plan: FastAPI backend + Nginx/static-frontend as containers,
+# on one internal network. Postgres is NOT a local container here — you're
+# using Supabase (managed Postgres+PostGIS), reached via DATABASE_URL.
+# THREDDS is also not included yet (see backend/README.md — model_source.py
+# reads a local NetCDF file directly until a real THREDDS server exists;
+# swap MODEL_NC_PATH for a THREDDS/OPeNDAP URL when that's stood up).
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: ocean3d-backend:latest
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: "postgresql://postgres:5KFTE4LhoQtn3LHW@db.udcjdlmxzrxvzzbnvvnf.supabase.co:5432/postgres"
+      MODEL_NC_PATH: /data/model.nc
+    volumes:
+      # Mount your model NetCDF file(s) here. Point MODEL_NC_PATH at whichever
+      # one should be served; swap this volume when INCOIS refreshes the data
+      # (see ingestion/run_ingestion.sh + a scheduled job for Phase 8's
+      # "Set up data refresh jobs" step from the Deployment Plan).
+      - ${MODEL_DATA_DIR:-./data}:/data:ro
+    networks:
+      - ocean3d-net
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: infra/frontend.Dockerfile
+    image: ocean3d-frontend:latest
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - ocean3d-net
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: infra/scheduler.Dockerfile
+    image: ocean3d-scheduler:latest
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    volumes:
+      - ${MODEL_DATA_DIR:-./data}:/app/data:ro
+    networks:
+      - ocean3d-net
+
+networks:
+  ocean3d-net:
+    driver: bridge

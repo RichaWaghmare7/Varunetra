@@ -1,0 +1,9 @@
+# infra/crontab
+# Matches data_sources.schedule_cron values seeded in backend/schema.sql
+# Runs daily at 03:00 (Argo/Glider ingestion) — adjust as needed.
+# NOTE: this only re-runs the ingestion script; it does NOT re-download new
+# Argo/model files by itself. Pair with a real download step (wget/curl
+# from Ifremer FTP or Copernicus API) before the ingestion line once you're
+# pulling live data instead of the bundled sample files.
+0 3 * * * root DATABASE_URL="$DATABASE_URL" python3 /app/ingestion/load_to_postgres.py --instruments /app/data/instruments.json --profiles /app/data/profiles.json >> /var/log/ingest.log 2>&1
+

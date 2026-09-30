@@ -1,0 +1,7 @@
+.git
+.env
+__pycache__
+*.pyc
+data_samples/model_slices
+frontend/data_bundles
+node_modules

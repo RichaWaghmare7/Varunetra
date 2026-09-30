@@ -1,0 +1,137 @@
+[
+  {
+    "instrument_id": "2902924",
+    "instrument_type": "argo",
+    "deployment_date": "2026-06-08T16:35:01",
+    "status": "active",
+    "metadata": {
+      "source_file": "D20260621_prof_0.nc"
+    }
+  },
+  {
+    "instrument_id": "2902930",
+    "instrument_type": "argo",
+    "deployment_date": "2026-06-16T03:59:11",
+    "status": "active",
+    "metadata": {
+      "source_file": "D20260621_prof_0.nc"
+    }
+  },
+  {
+    "instrument_id": "7902319",
+    "instrument_type": "argo",
+    "deployment_date": "2026-06-03T13:45:38",
+    "status": "active",
+    "metadata": {
+      "source_file": "D20260621_prof_0.nc"
+    }
+  },
+  {
+    "instrument_id": "2902921",
+    "instrument_type": "argo",
+    "deployment_date": "2026-05-28T02:07:49",
+    "status": "active",
+    "metadata": {
+      "source_file": "D20260621_prof_0.nc"
+    }
+  },
+  {
+    "instrument_id": "2904016",
+    "instrument_type": "argo",
+    "deployment_date": "2026-05-31T07:48:31",
+    "status": "active",
+    "metadata": {
+      "source_file": "D20260621_prof_0.nc"
+    }
+  },
+  {
+    "instrument_id": "6999989",
+    "instrument_type": "argo",
+    "deployment_date": "2026-05-31T02:26:01",
+    "status": "active",
+    "metadata": {
+      "source_file": "D20260621_prof_0.nc"
+    }
+  },
+  {
+    "instrument_id": "2904017",
+    "instrument_type": "argo",
+    "deployment_date": "2026-05-27T00:06:55",
+    "status": "active",
+    "metadata": {
+      "source_file": "D20260621_prof_0.nc"
+    }
+  },
+  {
+    "instrument_id": "6999991",
+    "instrument_type": "argo",
+    "deployment_date": "2026-05-25T11:21:31",
+    "status": "active",
+    "metadata": {
+      "source_file": "D20260621_prof_0.nc"
+    }
+  },
+  {
+    "instrument_id": "2902917",
+    "instrument_type": "argo",
+    "deployment_date": "2026-05-30T20:54:17",
+    "status": "active",
+    "metadata": {
+      "source_file": "D20260621_prof_0.nc"
+    }
+  },
+  {
+    "instrument_id": "2902929",
+    "instrument_type": "argo",
+    "deployment_date": "2026-05-27T13:08:01",
+    "status": "active",
+    "metadata": {
+      "source_file": "D20260621_prof_0.nc"
+    }
+  },
+  {
+    "instrument_id": "2902932",
+    "instrument_type": "argo",
+    "deployment_date": "2026-06-01T06:36:22",
+    "status": "active",
+    "metadata": {
+      "source_file": "D20260621_prof_0.nc"
+    }
+  },
+  {
+    "instrument_id": "2902893",
+    "instrument_type": "argo",
+    "deployment_date": "2026-05-28T10:24:55",
+    "status": "active",
+    "metadata": {
+      "source_file": "D20260621_prof_0.nc"
+    }
+  },
+  {
+    "instrument_id": "2902904",
+    "instrument_type": "argo",
+    "deployment_date": "2026-05-29T00:27:40",
+    "status": "active",
+    "metadata": {
+      "source_file": "D20260621_prof_0.nc"
+    }
+  },
+  {
+    "instrument_id": "1902795",
+    "instrument_type": "argo",
+    "deployment_date": "2026-05-30T06:30:47",
+    "status": "active",
+    "metadata": {
+      "source_file": "D20260621_prof_0.nc"
+    }
+  },
+  {
+    "instrument_id": "7902318",
+    "instrument_type": "argo",
+    "deployment_date": "2026-05-27T11:27:01",
+    "status": "active",
+    "metadata": {
+      "source_file": "D20260621_prof_0.nc"
+    }
+  }
+]

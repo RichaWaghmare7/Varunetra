@@ -1,0 +1,254 @@
+[
+  {
+    "variable": "temperature",
+    "time": "2026-06-21",
+    "depth_m": 0.49402499198913574,
+    "file": "slice_temperature_2026-06-21_0m.json"
+  },
+  {
+    "variable": "temperature",
+    "time": "2026-06-21",
+    "depth_m": 9.572997093200684,
+    "file": "slice_temperature_2026-06-21_10m.json"
+  },
+  {
+    "variable": "temperature",
+    "time": "2026-06-21",
+    "depth_m": 29.444730758666992,
+    "file": "slice_temperature_2026-06-21_30m.json"
+  },
+  {
+    "variable": "temperature",
+    "time": "2026-06-22",
+    "depth_m": 0.49402499198913574,
+    "file": "slice_temperature_2026-06-22_0m.json"
+  },
+  {
+    "variable": "temperature",
+    "time": "2026-06-22",
+    "depth_m": 9.572997093200684,
+    "file": "slice_temperature_2026-06-22_10m.json"
+  },
+  {
+    "variable": "temperature",
+    "time": "2026-06-22",
+    "depth_m": 29.444730758666992,
+    "file": "slice_temperature_2026-06-22_30m.json"
+  },
+  {
+    "variable": "temperature",
+    "time": "2026-06-23",
+    "depth_m": 0.49402499198913574,
+    "file": "slice_temperature_2026-06-23_0m.json"
+  },
+  {
+    "variable": "temperature",
+    "time": "2026-06-23",
+    "depth_m": 9.572997093200684,
+    "file": "slice_temperature_2026-06-23_10m.json"
+  },
+  {
+    "variable": "temperature",
+    "time": "2026-06-23",
+    "depth_m": 29.444730758666992,
+    "file": "slice_temperature_2026-06-23_30m.json"
+  },
+  {
+    "variable": "salinity",
+    "time": "2026-06-21",
+    "depth_m": 0.49402499198913574,
+    "file": "slice_salinity_2026-06-21_0m.json"
+  },
+  {
+    "variable": "salinity",
+    "time": "2026-06-21",
+    "depth_m": 9.572997093200684,
+    "file": "slice_salinity_2026-06-21_10m.json"
+  },
+  {
+    "variable": "salinity",
+    "time": "2026-06-21",
+    "depth_m": 29.444730758666992,
+    "file": "slice_salinity_2026-06-21_30m.json"
+  },
+  {
+    "variable": "salinity",
+    "time": "2026-06-22",
+    "depth_m": 0.49402499198913574,
+    "file": "slice_salinity_2026-06-22_0m.json"
+  },
+  {
+    "variable": "salinity",
+    "time": "2026-06-22",
+    "depth_m": 9.572997093200684,
+    "file": "slice_salinity_2026-06-22_10m.json"
+  },
+  {
+    "variable": "salinity",
+    "time": "2026-06-22",
+    "depth_m": 29.444730758666992,
+    "file": "slice_salinity_2026-06-22_30m.json"
+  },
+  {
+    "variable": "salinity",
+    "time": "2026-06-23",
+    "depth_m": 0.49402499198913574,
+    "file": "slice_salinity_2026-06-23_0m.json"
+  },
+  {
+    "variable": "salinity",
+    "time": "2026-06-23",
+    "depth_m": 9.572997093200684,
+    "file": "slice_salinity_2026-06-23_10m.json"
+  },
+  {
+    "variable": "salinity",
+    "time": "2026-06-23",
+    "depth_m": 29.444730758666992,
+    "file": "slice_salinity_2026-06-23_30m.json"
+  },
+  {
+    "variable": "u_current",
+    "time": "2026-06-21",
+    "depth_m": 0.49402499198913574,
+    "file": "slice_u_current_2026-06-21_0m.json"
+  },
+  {
+    "variable": "u_current",
+    "time": "2026-06-21",
+    "depth_m": 9.572997093200684,
+    "file": "slice_u_current_2026-06-21_10m.json"
+  },
+  {
+    "variable": "u_current",
+    "time": "2026-06-21",
+    "depth_m": 29.444730758666992,
+    "file": "slice_u_current_2026-06-21_30m.json"
+  },
+  {
+    "variable": "u_current",
+    "time": "2026-06-22",
+    "depth_m": 0.49402499198913574,
+    "file": "slice_u_current_2026-06-22_0m.json"
+  },
+  {
+    "variable": "u_current",
+    "time": "2026-06-22",
+    "depth_m": 9.572997093200684,
+    "file": "slice_u_current_2026-06-22_10m.json"
+  },
+  {
+    "variable": "u_current",
+    "time": "2026-06-22",
+    "depth_m": 29.444730758666992,
+    "file": "slice_u_current_2026-06-22_30m.json"
+  },
+  {
+    "variable": "u_current",
+    "time": "2026-06-23",
+    "depth_m": 0.49402499198913574,
+    "file": "slice_u_current_2026-06-23_0m.json"
+  },
+  {
+    "variable": "u_current",
+    "time": "2026-06-23",
+    "depth_m": 9.572997093200684,
+    "file": "slice_u_current_2026-06-23_10m.json"
+  },
+  {
+    "variable": "u_current",
+    "time": "2026-06-23",
+    "depth_m": 29.444730758666992,
+    "file": "slice_u_current_2026-06-23_30m.json"
+  },
+  {
+    "variable": "v_current",
+    "time": "2026-06-21",
+    "depth_m": 0.49402499198913574,
+    "file": "slice_v_current_2026-06-21_0m.json"
+  },
+  {
+    "variable": "v_current",
+    "time": "2026-06-21",
+    "depth_m": 9.572997093200684,
+    "file": "slice_v_current_2026-06-21_10m.json"
+  },
+  {
+    "variable": "v_current",
+    "time": "2026-06-21",
+    "depth_m": 29.444730758666992,
+    "file": "slice_v_current_2026-06-21_30m.json"
+  },
+  {
+    "variable": "v_current",
+    "time": "2026-06-22",
+    "depth_m": 0.49402499198913574,
+    "file": "slice_v_current_2026-06-22_0m.json"
+  },
+  {
+    "variable": "v_current",
+    "time": "2026-06-22",
+    "depth_m": 9.572997093200684,
+    "file": "slice_v_current_2026-06-22_10m.json"
+  },
+  {
+    "variable": "v_current",
+    "time": "2026-06-22",
+    "depth_m": 29.444730758666992,
+    "file": "slice_v_current_2026-06-22_30m.json"
+  },
+  {
+    "variable": "v_current",
+    "time": "2026-06-23",
+    "depth_m": 0.49402499198913574,
+    "file": "slice_v_current_2026-06-23_0m.json"
+  },
+  {
+    "variable": "v_current",
+    "time": "2026-06-23",
+    "depth_m": 9.572997093200684,
+    "file": "slice_v_current_2026-06-23_10m.json"
+  },
+  {
+    "variable": "v_current",
+    "time": "2026-06-23",
+    "depth_m": 29.444730758666992,
+    "file": "slice_v_current_2026-06-23_30m.json"
+  },
+  {
+    "variable": "ssh",
+    "time": "2026-06-21",
+    "depth_m": null,
+    "file": "slice_ssh_2026-06-21_0m.json"
+  },
+  {
+    "variable": "ssh",
+    "time": "2026-06-22",
+    "depth_m": null,
+    "file": "slice_ssh_2026-06-22_0m.json"
+  },
+  {
+    "variable": "ssh",
+    "time": "2026-06-23",
+    "depth_m": null,
+    "file": "slice_ssh_2026-06-23_0m.json"
+  },
+  {
+    "variable": "mixed_layer_depth",
+    "time": "2026-06-21",
+    "depth_m": null,
+    "file": "slice_mixed_layer_depth_2026-06-21_0m.json"
+  },
+  {
+    "variable": "mixed_layer_depth",
+    "time": "2026-06-22",
+    "depth_m": null,
+    "file": "slice_mixed_layer_depth_2026-06-22_0m.json"
+  },
+  {
+    "variable": "mixed_layer_depth",
+    "time": "2026-06-23",
+    "depth_m": null,
+    "file": "slice_mixed_layer_depth_2026-06-23_0m.json"
+  }
+]

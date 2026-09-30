@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Explore India's Ocean — Ocean Valley</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.121/Build/Cesium/Cesium.js"></script>
+<link href="https://cesium.com/downloads/cesiumjs/releases/1.121/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #050B14;
+    --bg-panel: rgba(10, 22, 40, 0.78);
+    --cyan: #1CAAD9;
+    --teal: #2EE6D6;
+    --amber: #FF8A3D;
+    --text: #E8EEF4;
+    --text-dim: #7C93A8;
+    --border: rgba(46, 230, 214, 0.2);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; background: var(--bg-deep); overflow: hidden;
+    font-family: 'Inter', sans-serif; color: var(--text); }
+  #cesiumContainer { position: absolute; inset: 0; }
+  .cesium-viewer-bottom, .cesium-viewer-toolbar, .cesium-viewer-animationContainer,
+  .cesium-viewer-timelineContainer, .cesium-viewer-fullscreenContainer { display: none !important; }
+  .cesium-credit-textContainer, .cesium-credit-imageContainer { display: none !important; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  #topbar {
+    position: absolute; top: 0; left: 0; right: 0; padding: 18px 24px;
+    display: flex; align-items: center; justify-content: space-between; z-index: 20;
+  }
+  #topbar .brand { display: flex; align-items: center; gap: 10px; }
+  #topbar .brand .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 12px var(--teal); }
+  #topbar .brand span { font-weight: 700; font-size: 17px; }
+  #backLink { font-size: 13px; color: var(--text-dim); text-decoration: none; border: 1px solid var(--border);
+    padding: 7px 14px; border-radius: 20px; background: var(--bg-panel); backdrop-filter: blur(10px); }
+  #backLink:hover { color: var(--text); }
+
+  .panel { background: var(--bg-panel); backdrop-filter: blur(16px); border: 1px solid var(--border);
+    border-radius: 16px; box-shadow: 0 10px 36px rgba(0,0,0,0.4); }
+
+  /* ---- Icon variable picker (bottom-left) ---- */
+  #variablePicker {
+    position: absolute; left: 24px; bottom: 26px; display: flex; gap: 10px; padding: 10px; z-index: 15;
+  }
+  .var-btn {
+    width: 62px; height: 62px; border-radius: 14px; border: 1px solid transparent; cursor: pointer;
+    background: rgba(255,255,255,0.04); color: var(--text-dim); display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 4px; font-size: 10.5px; transition: 0.15s;
+  }
+  .var-btn .icon { font-size: 20px; }
+  .var-btn.active { background: rgba(46,230,214,0.14); border-color: var(--teal); color: var(--teal); }
+  .var-btn:hover:not(.active) { background: rgba(255,255,255,0.08); color: var(--text); }
+
+  /* ---- Guided tours panel (top-right) ---- */
+  #toursPanel { position: absolute; right: 24px; top: 84px; width: 240px; padding: 18px; z-index: 15; }
+  #toursPanel h3 { margin: 0 0 4px 0; font-size: 15px; font-weight: 700; }
+  #toursPanel p { margin: 0 0 14px 0; font-size: 12.5px; color: var(--text-dim); line-height: 1.5; }
+  .tour-btn {
+    width: 100%; text-align: left; background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+    color: var(--text); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; cursor: pointer;
+    font-family: inherit; font-size: 13px; font-weight: 500; transition: 0.15s;
+  }
+  .tour-btn:hover { background: rgba(28,170,217,0.14); border-color: var(--cyan); }
+  .tour-btn .sub { display: block; font-size: 11px; color: var(--text-dim); font-weight: 400; margin-top: 3px; }
+
+  /* ---- Simple depth dial (bottom-right, big) ---- */
+  #depthDial { position: absolute; right: 24px; bottom: 26px; padding: 14px 18px; z-index: 15; width: 200px; }
+  #depthDial label { font-size: 12px; color: var(--text-dim); display:block; margin-bottom: 8px; }
+  #depthSlider { width: 100%; height: 8px; accent-color: var(--cyan); }
+  #depthReadout { font-size: 20px; font-weight: 700; margin-top: 6px; }
+  #depthReadout span { font-size: 12px; color: var(--text-dim); font-weight: 400; }
+
+  /* ---- Caption bar (tour mode) ---- */
+  #captionBar {
+    position: absolute; left: 50%; top: 100px; transform: translateX(-50%) translateY(-10px);
+    width: min(640px, 88vw); padding: 20px 26px; text-align: center; z-index: 25;
+    opacity: 0; pointer-events: none; transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  #captionBar.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+  #captionBar .tourLabel { font-size: 11px; color: var(--teal); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  #captionBar .captionText { font-size: 17px; line-height: 1.5; }
+  #tourControls { margin-top: 14px; display: flex; gap: 10px; justify-content: center; }
+  #tourControls button {
+    background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--text);
+    padding: 7px 16px; border-radius: 20px; cursor: pointer; font-family: inherit; font-size: 12.5px;
+  }
+  #tourControls button:hover { background: rgba(255,255,255,0.12); }
+  #tourControls button.exit { color: var(--amber); border-color: rgba(255,138,61,0.4); }
+
+  #noDataBadge {
+    position: absolute; left: 50%; top: 90px; transform: translateX(-50%);
+    background: rgba(255,138,61,0.12); border: 1px solid rgba(255,138,61,0.35); color: var(--amber);
+    padding: 6px 14px; border-radius: 20px; font-size: 12px; z-index: 14; display: none;
+  }
+</style>
+</head>
+<body>
+<div id="cesiumContainer"></div>
+
+<div id="topbar">
+  <div class="brand"><span class="dot"></span><span>Explore India's Ocean</span></div>
+  <a id="backLink" href="dashboard.html">Switch to Operational View →</a>
+</div>
+
+<div id="noDataBadge">No data at this depth/time</div>
+
+<div id="variablePicker" class="panel">
+  <button class="var-btn active" data-var="temperature"><span class="icon">🌡️</span>Temperature</button>
+  <button class="var-btn" data-var="salinity"><span class="icon">💧</span>Salinity</button>
+  <button class="var-btn" data-var="ssh"><span class="icon">🌊</span>Sea Height</button>
+</div>
+
+<div id="depthDial" class="panel">
+  <label>How deep are we looking?</label>
+  <input type="range" id="depthSlider" min="0" max="2" value="0" step="1">
+  <div id="depthReadout">0<span> m — surface</span></div>
+</div>
+
+<div id="toursPanel" class="panel">
+  <h3>Guided Tours</h3>
+  <p>Sit back and let the ocean tell its story.</p>
+  <button class="tour-btn" data-tour="monsoon">🌀 The Monsoon Current
+    <span class="sub">How the Arabian Sea shifts over 3 days</span></button>
+  <button class="tour-btn" data-tour="journey">📍 A Float's Journey
+    <span class="sub">Meet a real ocean-monitoring robot</span></button>
+  <button class="tour-btn" data-tour="layers">🧊 Layers of the Ocean
+    <span class="sub">Why the deep sea is colder</span></button>
+</div>
+
+<div id="captionBar" class="panel">
+  <div class="tourLabel" id="tourLabel">Tour</div>
+  <div class="captionText" id="captionText">...</div>
+  <div id="tourControls">
+    <button id="tourNextBtn">Next →</button>
+    <button id="tourExitBtn" class="exit">Exit tour</button>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   DATA — injected by build script (see ../frontend/build_scripts/inject_data.py)
+   ========================================================= */
+const MODEL_BUNDLE = {{MODEL_BUNDLE_JSON}};
+const FLOATS_BUNDLE = {{FLOATS_BUNDLE_JSON}};
+const CESIUM_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6Im9aNlRSR0kzMHBEQVJReFoiLCJqdGkiOiJmNzVkNTZhMy03YWQ1LTQ0YTEtYWQ2Ni1hMDFhODUxMjgxY2MiLCJpZCI6NDg5MDc5LCJpc3MiOiJodHRwczovL2FwaS5jZXNpdW0uY29tIiwiYXVkIjoidW5kZWZpbmVkX2RlZmF1bHQiLCJpYXQiOjE3ODkxMzc3NzV9.7pkN9tUwObsYp-r4FmyV5l11uKjzYmuY4kd8F6oGmsk";
+
+Cesium.Ion.defaultAccessToken = CESIUM_TOKEN;
+const EEZ = { west: 63.0, south: -3.0, east: 97.0, north: 30.0 };
+
+const viewer = new Cesium.Viewer('cesiumContainer', {
+  baseLayerPicker: false, geocoder: false, homeButton: false, sceneModePicker: false,
+  navigationHelpButton: false, animation: false, timeline: false, fullscreenButton: false,
+  infoBox: false, selectionIndicator: false, shouldAnimate: false,
+});
+viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#050B14');
+viewer.scene.fog.enabled = false;
+viewer.camera.flyTo({ destination: Cesium.Rectangle.fromDegrees(EEZ.west, EEZ.south, EEZ.east, EEZ.north), duration: 1.2 });
+
+/* ---- palettes (same as dashboard) ---- */
+const PALETTES = {
+  thermal: [[43,10,92],[28,170,217],[46,230,214],[245,215,110],[255,138,61],[217,67,46]],
+};
+function lerpColor(a,b,t){ return a.map((v,i)=>Math.round(v+(b[i]-v)*t)); }
+function paletteColor(t){
+  const stops = PALETTES.thermal; t = Math.max(0, Math.min(1, t));
+  const scaled = t*(stops.length-1); const i = Math.floor(scaled); const frac = scaled-i;
+  if (i >= stops.length-1) return stops[stops.length-1];
+  return lerpColor(stops[i], stops[i+1], frac);
+}
+
+const TIMES = ['2026-06-21','2026-06-22','2026-06-23'];
+const DEPTHS = [0,10,30];
+let state = { variable: 'temperature', depthIdx: 0, timeIdx: 0 };
+let currentImageryLayer = null;
+let markerEntities = [];
+
+function bundleKey(variable, timeIdx, depthIdx){
+  const t = TIMES[timeIdx]; const d = variable === 'ssh' ? 0 : DEPTHS[depthIdx];
+  return `${variable}_${t}_${d}m`;
+}
+function dataRange(grid){
+  let min = Infinity, max = -Infinity;
+  for (const row of grid) for (const v of row) { if (v===null) continue; if (v<min) min=v; if (v>max) max=v; }
+  return [min, max];
+}
+function renderSlice(){
+  const key = bundleKey(state.variable, state.timeIdx, state.depthIdx);
+  const slice = MODEL_BUNDLE[key];
+  const badge = document.getElementById('noDataBadge');
+  if (!slice) { badge.style.display = 'block'; return; }
+  badge.style.display = 'none';
+  const grid = slice.grid; const rows = grid.length, cols = grid[0].length;
+  const [min, max] = dataRange(grid);
+  const canvas = document.createElement('canvas'); canvas.width = cols; canvas.height = rows;
+  const ctx = canvas.getContext('2d'); const imgData = ctx.createImageData(cols, rows);
+  for (let r=0; r<rows; r++){
+    const srcRow = grid[rows-1-r];
+    for (let c=0; c<cols; c++){
+      const v = srcRow[c]; const idx = (r*cols+c)*4;
+      if (v===null){ imgData.data[idx+3]=0; continue; }
+      const t = (v-min)/((max-min)||1);
+      const [R,G,B] = paletteColor(t);
+      imgData.data[idx]=R; imgData.data[idx+1]=G; imgData.data[idx+2]=B; imgData.data[idx+3]=235;
+    }
+  }
+  ctx.putImageData(imgData,0,0);
+  if (currentImageryLayer) viewer.imageryLayers.remove(currentImageryLayer, true);
+  const rect = Cesium.Rectangle.fromDegrees(slice.lon[0], slice.lat[0], slice.lon[slice.lon.length-1], slice.lat[slice.lat.length-1]);
+  const provider = new Cesium.SingleTileImageryProvider({ url: canvas.toDataURL(), rectangle: rect });
+  currentImageryLayer = viewer.imageryLayers.addImageryProvider(provider);
+  currentImageryLayer.alpha = 0.85;
+
+  const depthLabel = state.variable === 'ssh' ? 'surface' : (DEPTHS[state.depthIdx]===0 ? 'surface' : DEPTHS[state.depthIdx]+'m deep');
+  document.getElementById('depthReadout').innerHTML = (state.variable==='ssh'?'0':DEPTHS[state.depthIdx]) + `<span> m — ${depthLabel}</span>`;
+}
+
+function renderMarkers(){
+  markerEntities.forEach(e => viewer.entities.remove(e));
+  markerEntities = [];
+  FLOATS_BUNDLE.forEach(f => {
+    const entity = viewer.entities.add({
+      position: Cesium.Cartesian3.fromDegrees(f.demo_lon, f.demo_lat),
+      point: { pixelSize: 11, color: Cesium.Color.fromCssColorString('#2EE6D6'),
+        outlineColor: Cesium.Color.fromCssColorString('#050B14'), outlineWidth: 2 },
+      properties: { floatData: f },
+    });
+    markerEntities.push(entity);
+  });
+}
+
+/* ---- variable picker ---- */
+document.querySelectorAll('.var-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.var-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.variable = btn.dataset.var;
+    renderSlice();
+  };
+});
+document.getElementById('depthSlider').oninput = (e) => { state.depthIdx = +e.target.value; renderSlice(); };
+
+/* =========================================================
+   GUIDED TOURS
+   ========================================================= */
+const TOURS = {
+  monsoon: {
+    label: 'The Monsoon Current',
+    steps: [
+      { variable: 'ssh', timeIdx: 0, depthIdx: 0,
+        camera: { lon: 80, lat: 12, height: 3200000 },
+        caption: "This is sea surface height across the Arabian Sea and Bay of Bengal — brighter areas sit higher, often where warm water piles up." },
+      { variable: 'ssh', timeIdx: 1, depthIdx: 0,
+        caption: "One day later, watch how the pattern shifts. Ocean currents are never still — they're driven by wind, heat, and the Earth's rotation." },
+      { variable: 'ssh', timeIdx: 2, depthIdx: 0,
+        caption: "By day three, the picture has changed again. Forecasters at INCOIS track these shifts every day to predict currents that affect fishing and shipping routes." },
+      { variable: 'temperature', timeIdx: 0, depthIdx: 0,
+        caption: "Switching to sea surface temperature — the warm orange band shows why the Arabian Sea is one of the hottest ocean basins on Earth in early summer." },
+    ],
+  },
+  journey: {
+    label: "A Float's Journey",
+    steps: [], // populated dynamically below from FLOATS_BUNDLE
+  },
+  layers: {
+    label: 'Layers of the Ocean',
+    steps: [
+      { variable: 'temperature', timeIdx: 0, depthIdx: 0,
+        camera: { lon: 78, lat: 15, height: 2600000 },
+        caption: "At the surface, sunlight warms the water — temperatures here reach nearly 30°C in the Arabian Sea." },
+      { variable: 'temperature', timeIdx: 0, depthIdx: 1,
+        caption: "Just 10 meters down, it's already a little cooler. Sunlight and wind mixing don't reach every layer equally." },
+      { variable: 'temperature', timeIdx: 0, depthIdx: 2,
+        caption: "At 30 meters, the drop is more noticeable. This boundary — where temperature falls quickly with depth — is called the thermocline." },
+      { variable: 'salinity', timeIdx: 0, depthIdx: 0,
+        caption: "Salinity tells a different story: it's shaped by rainfall, river runoff, and evaporation, not just depth." },
+    ],
+  },
+};
+
+// Build "A Float's Journey" dynamically from real embedded float data
+(function buildFloatJourney(){
+  const f = FLOATS_BUNDLE[0];
+  if (!f) return;
+  const tempPts = f.series.temperature || [];
+  const shallow = tempPts[0], deep = tempPts[tempPts.length-1];
+  TOURS.journey.steps = [
+    { variable: 'temperature', timeIdx: 0, depthIdx: 0,
+      camera: { lon: f.demo_lon, lat: f.demo_lat, height: 900000 },
+      caption: `Meet Argo float ${f.instrument_id} — a free-drifting robot that dives to measure the ocean, then surfaces to send data by satellite.`,
+      focusFloat: f },
+    { caption: shallow ? `Near the surface, it measured ${shallow.value.toFixed(1)}°C at ${shallow.depth_m.toFixed(0)}m depth.` : "This float recorded temperature at many depths." },
+    { caption: deep && deep !== shallow ? `By ${deep.depth_m.toFixed(0)}m down, the reading dropped to ${deep.value.toFixed(1)}°C.` : "Readings change a lot with depth." },
+    { caption: `Floats like this one drift with ocean currents for years, surfacing every few days — real data just like this powers the operational dashboard.` },
+  ];
+})();
+
+let activeTour = null, tourStepIdx = 0;
+
+function showCaption(tour, step){
+  document.getElementById('tourLabel').textContent = tour.label;
+  document.getElementById('captionText').textContent = step.caption;
+  document.getElementById('captionBar').classList.add('show');
+}
+function applyStep(step){
+  if (step.variable) {
+    state.variable = step.variable;
+    document.querySelectorAll('.var-btn').forEach(b => b.classList.toggle('active', b.dataset.var === step.variable));
+  }
+  if (step.timeIdx !== undefined) state.timeIdx = step.timeIdx;
+  if (step.depthIdx !== undefined) {
+    state.depthIdx = step.depthIdx;
+    document.getElementById('depthSlider').value = step.depthIdx;
+  }
+  if (step.variable || step.timeIdx !== undefined || step.depthIdx !== undefined) renderSlice();
+  if (step.camera) {
+    viewer.camera.flyTo({
+      destination: Cesium.Cartesian3.fromDegrees(step.camera.lon, step.camera.lat, step.camera.height),
+      duration: 1.6,
+    });
+  }
+}
+function startTour(key){
+  activeTour = TOURS[key]; tourStepIdx = 0;
+  if (!activeTour.steps.length) return;
+  applyStep(activeTour.steps[0]);
+  showCaption(activeTour, activeTour.steps[0]);
+  document.getElementById('tourNextBtn').textContent = activeTour.steps.length > 1 ? 'Next →' : 'Finish';
+}
+function nextStep(){
+  if (!activeTour) return;
+  tourStepIdx++;
+  if (tourStepIdx >= activeTour.steps.length) { exitTour(); return; }
+  const step = activeTour.steps[tourStepIdx];
+  applyStep(step);
+  showCaption(activeTour, step);
+  document.getElementById('tourNextBtn').textContent = (tourStepIdx === activeTour.steps.length-1) ? 'Finish' : 'Next →';
+}
+function exitTour(){
+  activeTour = null;
+  document.getElementById('captionBar').classList.remove('show');
+}
+document.querySelectorAll('.tour-btn').forEach(btn => {
+  btn.onclick = () => startTour(btn.dataset.tour);
+});
+document.getElementById('tourNextBtn').onclick = nextStep;
+document.getElementById('tourExitBtn').onclick = exitTour;
+
+/* ---- init ---- */
+renderSlice();
+renderMarkers();
+</script>
+</body>
+</html>
